@@ -56,8 +56,9 @@ No authentication required.
 ## Benefits
 
 ### Energy
-- **Max Energy:** 240 → 420
-- **Regen Rate:** 10/hour → 17.5/hour
+- Prefer live values from `/offchain/player/energy/{address}` `parsedData` for automation
+- Common observed juice uplift: **240 → 420** max energy
+- Common observed regen uplift: roughly **10/hour → 17.5-18/hour**
 
 ### Dungeon
 - **High Intensity Runs:** 3x energy cost for 3x loot
@@ -87,6 +88,7 @@ No authentication required.
 When starting a juiced run, set `isJuiced: true`:
 
 ```bash
+# Example: juiced Dungetron: 5000 start
 curl -X POST https://gigaverse.io/api/game/dungeon/action \
   -H "Authorization: Bearer $JWT" \
   -H "Content-Type: application/json" \
@@ -96,13 +98,19 @@ curl -X POST https://gigaverse.io/api/game/dungeon/action \
     "actionToken": 0,
     "data": {
       "consumables": [],
+      "itemId": 0,
+      "expectedAmount": 0,
+      "index": 0,
       "isJuiced": true,
-      "index": 0
+      "gearInstanceIds": []
     }
   }'
 ```
 
-⚠️ **Note:** Juiced runs cost 3x energy but provide 3x rewards and the extra upgrade option chance.
+⚠️ **Notes:**
+- This example is scoped to `Dungetron: 5000` (`dungeonId: 1`), not Underhaul.
+- Underhaul uses `dungeonId: 3` and fresh-start token behavior may differ.
+- Juiced runs generally cost more energy and improve rewards / upgrade options, but bots should verify live run state rather than infer actual juiced resolution only from the request payload.
 
 ---
 
@@ -132,7 +140,11 @@ Use the included purchase script:
 
 ```bash
 cd skills/gigaverse/scripts
-export NOOB_PRIVATE_KEY="0x..."
+npm ci
+
+# Private key source of truth: ~/.secrets/gigaverse-private-key.txt
+# (Env var NOOB_PRIVATE_KEY remains supported as an override.)
+
 npx ts-node purchase-juice.ts 2  # JUICE BOX
 npx ts-node purchase-juice.ts 3  # JUICE CARTON
 npx ts-node purchase-juice.ts 4  # JUICE TANK
@@ -182,7 +194,8 @@ async function purchaseJuice(privateKey: string, listingId: number, priceEth: st
 }
 
 // Example: Buy JUICE BOX (30 days)
-await purchaseJuice(process.env.PRIVATE_KEY, 2, '0.01');
+// Use env override only if you do not want to rely on ~/.secrets/gigaverse-private-key.txt
+await purchaseJuice(process.env.NOOB_PRIVATE_KEY, 2, '0.01');
 ```
 
 ### Raw Transaction

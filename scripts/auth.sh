@@ -7,6 +7,12 @@ set -e
 
 SECRETS_DIR="${HOME}/.secrets"
 KEY_FILE="${SECRETS_DIR}/gigaverse-private-key.txt"
+# JWT precedence:
+# 1) skills/gigaverse/credentials/jwt.txt (skill-local, recommended)
+# 2) ~/.secrets/gigaverse-jwt.txt
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+JWT_FILE_WORKSPACE="$SKILL_DIR/credentials/jwt.txt"
 JWT_FILE="${SECRETS_DIR}/gigaverse-jwt.txt"
 ADDR_FILE="${SECRETS_DIR}/gigaverse-address.txt"
 
@@ -41,7 +47,9 @@ echo "   Address: $ADDRESS"
 echo "   Message: $MESSAGE"
 
 # Sign the message using node + viem
-SIGNATURE=$(node -e "
+# NOTE: viem is installed as a local dependency under scripts/node_modules.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SIGNATURE=$(cd "$SCRIPT_DIR" && node -e "
 const { privateKeyToAccount } = require('viem/accounts');
 
 async function sign() {
@@ -53,8 +61,8 @@ sign();
 " 2>/dev/null)
 
 if [ -z "$SIGNATURE" ]; then
-    echo "❌ Failed to sign message. Ensure viem is installed:"
-    echo "   npm install -g viem"
+    echo "❌ Failed to sign message. Install deps in skills/gigaverse/scripts first:"
+    echo "   cd $SCRIPT_DIR && npm ci"
     exit 1
 fi
 
@@ -83,7 +91,11 @@ if [ -z "$JWT" ]; then
     exit 1
 fi
 
-# Save JWT
+# Save JWT (prefer workspace-local location for skill usage)
+echo "$JWT" > "$JWT_FILE_WORKSPACE"
+chmod 600 "$JWT_FILE_WORKSPACE"
+# also mirror to ~/.secrets for backward compatibility
+mkdir -p "$SECRETS_DIR"
 echo "$JWT" > "$JWT_FILE"
 chmod 600 "$JWT_FILE"
 
@@ -96,6 +108,7 @@ fi
 
 echo ""
 echo "✅ Authenticated successfully!"
-echo "   JWT saved to: $JWT_FILE"
+echo "   JWT saved to: $JWT_FILE_WORKSPACE (recommended)"
+echo "   JWT mirrored to: $JWT_FILE"
 echo ""
 echo "   Use with: -H \"Authorization: Bearer \$(cat $JWT_FILE)\""

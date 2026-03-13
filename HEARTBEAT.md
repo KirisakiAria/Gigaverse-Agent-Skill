@@ -36,14 +36,15 @@ Create or update your state file (e.g. `memory/heartbeat-state.json`):
 curl https://gigaverse.io/api/offchain/player/energy/YOUR_ADDRESS
 ```
 
-Response:
+Response (shape evolves; prefer `entities[0].parsedData` live fields):
 ```json
 {
   "entities": [{
     "parsedData": {
-      "currentEnergy": 100,
+      "energyValue": 100,
       "maxEnergy": 100,
-      "lastRegenTime": 1730000000
+      "regenPerHour": 10,
+      "isPlayerJuiced": false
     }
   }]
 }
@@ -90,21 +91,21 @@ async function checkGigaverseEnergy(address, lastState) {
   
   if (!energy) return { notify: false };
   
-  const { currentEnergy, maxEnergy } = energy;
-  const percentage = (currentEnergy / maxEnergy) * 100;
+  const { energyValue, maxEnergy } = energy;
+  const percentage = (energyValue / maxEnergy) * 100;
   const wasFull = lastState.lastEnergyLevel >= maxEnergy;
-  const isFull = currentEnergy >= maxEnergy;
+  const isFull = energyValue >= maxEnergy;
   
   // Notify if just became full
   const shouldNotify = isFull && !wasFull && !lastState.lastNotifiedFull;
   
   return {
     notify: shouldNotify,
-    currentEnergy,
+    currentEnergy: energyValue,
     maxEnergy,
     percentage,
     message: shouldNotify 
-      ? `🎮 Gigaverse: Energy full! (${currentEnergy}/${maxEnergy}) Ready to quest?`
+      ? `🎮 Gigaverse: Energy full! (${energyValue}/${maxEnergy}) Ready to quest?`
       : null
   };
 }
@@ -119,7 +120,8 @@ Between runs, check if the Noob can level up.
 ### 1. Get Current XP Balance
 
 ```bash
-JWT=$(cat ~/.secrets/gigaverse-jwt.txt)
+JWT=$(cat ./skills/gigaverse/credentials/jwt.txt)  # recommended
+# fallback: JWT=$(cat ~/.secrets/gigaverse-jwt.txt)
 curl https://gigaverse.io/api/items/balances \
   -H "Authorization: Bearer $JWT" | jq '.entities[] | select(.ID_CID == "2") | .BALANCE_CID'
 ```

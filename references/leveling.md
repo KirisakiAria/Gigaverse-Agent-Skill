@@ -15,9 +15,9 @@ Between dungeon runs, check for XP items (scrap) and level up your Noob's skills
 
 | Dungeon | Skill Name | XP Item ID | Item Name |
 |---------|------------|------------|-----------|
-| 1 | Dungetron 5000 | 2 | Dungeon Scrap |
+| 1 | Dungetron: 5000 | 2 | Dungeon Scrap |
 | 2 | Gigus Dungeon | - | (disabled) |
-| 3 | Dungetron Underhaul | 3 | (TBD) |
+| 3 | Underhaul | 3 | Unknown / verify from live game data |
 
 ---
 

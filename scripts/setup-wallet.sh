@@ -57,8 +57,9 @@ case "$1" in
         if command -v cast &> /dev/null; then
             ADDRESS=$(cast wallet address "$PRIVATE_KEY" 2>/dev/null)
         else
-            # Fallback: use node with viem
-            ADDRESS=$(node -e "
+            # Fallback: use node with local viem dependency (scripts/node_modules)
+            SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            ADDRESS=$(cd "$SCRIPT_DIR" && node -e "
                 const { privateKeyToAccount } = require('viem/accounts');
                 const account = privateKeyToAccount('$PRIVATE_KEY');
                 console.log(account.address);
@@ -66,7 +67,8 @@ case "$1" in
         fi
         
         if [ -z "$ADDRESS" ]; then
-            echo "❌ Failed to derive address. Install foundry (cast) or ensure viem is available."
+            echo "❌ Failed to derive address. Install foundry (cast) or install script deps:"
+            echo "   cd $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && npm ci"
             exit 1
         fi
         
@@ -112,7 +114,8 @@ case "$1" in
         if command -v cast &> /dev/null; then
             ADDRESS=$(cast wallet address "$PRIVATE_KEY" 2>/dev/null)
         else
-            ADDRESS=$(node -e "
+            SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            ADDRESS=$(cd "$SCRIPT_DIR" && node -e "
                 const { privateKeyToAccount } = require('viem/accounts');
                 const account = privateKeyToAccount('$PRIVATE_KEY');
                 console.log(account.address);
@@ -120,7 +123,8 @@ case "$1" in
         fi
         
         if [ -z "$ADDRESS" ]; then
-            echo "❌ Failed to derive address from key."
+            echo "❌ Failed to derive address from key. Ensure deps are installed:"
+            echo "   cd $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && npm ci"
             exit 1
         fi
         

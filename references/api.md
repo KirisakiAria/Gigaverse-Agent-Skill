@@ -54,7 +54,7 @@ See [juice.md](juice.md) for full GigaJuice documentation.
 | dungeonId | Name |
 |-----------|------|
 | 1 | Dungetron: 5000 |
-| other | Underhaul |
+| 3 | Underhaul |
 
 > **Note:** See [onboarding.md](onboarding.md) for new player setup flow.
 
@@ -140,18 +140,24 @@ Check the `canEnterGame` field in response.
 curl https://gigaverse.io/api/offchain/player/energy/0xYourAddress
 ```
 
-Response:
+Response shape may evolve. Prefer live fields under `entities[0].parsedData`, especially:
+
 ```json
 {
   "entities": [{
+    "ENERGY_CID": 420000000000,
     "parsedData": {
-      "currentEnergy": 100,
-      "maxEnergy": 100,
-      "lastRegenTime": 1730000000
+      "energy": 420000000000,
+      "energyValue": 420,
+      "maxEnergy": 420,
+      "regenPerHour": 18,
+      "isPlayerJuiced": true
     }
   }]
 }
 ```
+
+Treat `parsedData.energyValue`, `parsedData.maxEnergy`, and `parsedData.regenPerHour` as the human-facing source of truth.
 
 ### Get Dungeon Metadata
 
@@ -182,37 +188,72 @@ All dungeon actions use `POST /game/dungeon/action` with bearer token.
 
 ### ⚠️ IMPORTANT: Action Token Handling
 
-Every response returns a new `actionToken`. You MUST use this token for your next action.
+Every response returns a new `actionToken`. You MUST use the latest trusted token for your next action.
+
+Conceptual chain:
 
 ```
-Request 1: actionToken: 0  →  Response: actionToken: 1
-Request 2: actionToken: 1  →  Response: actionToken: 2
-Request 3: actionToken: 2  →  Response: actionToken: 3
+Fresh start: actionToken: ""  →  Response: actionToken: N
+Next move:   actionToken: N    →  Response: actionToken: N+1
+Next loot:   actionToken: N+1  →  Response: actionToken: N+2
 ...
 ```
 
 **Rules:**
 - Always persist the returned `actionToken`
+- Fresh-start requests may use `""` depending on dungeon/session state
 - Server rejects stale/mismatched tokens (~5s anti-spam window)
-- If you get "Invalid action token", call `/game/dungeon/state` to resync
+- If you get `Invalid action token`, call `/game/dungeon/state` to resync
 
-### Start a Run
+### Start or Resume a Run
+
+Always query `/game/dungeon/state` first. If `data.run != null`, resume the existing run instead of starting a new one.
 
 ```bash
+# Check for active run first
+curl https://gigaverse.io/api/game/dungeon/state \
+  -H "Authorization: Bearer YOUR_JWT"
+
+# Only start a new run when no active run exists
+
+# Underhaul fresh-start example (observed working pattern)
+curl -X POST https://gigaverse.io/api/game/dungeon/action \
+  -H "Authorization: Bearer YOUR_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "start_run",
+    "dungeonId": 3,
+    "actionToken": "",
+    "data": {
+      "consumables": [],
+      "itemId": 0,
+      "expectedAmount": 0,
+      "index": 0,
+      "isJuiced": false,
+      "gearInstanceIds": []
+    }
+  }'
+
+# Dungetron: 5000 example (observed working fresh-start pattern)
 curl -X POST https://gigaverse.io/api/game/dungeon/action \
   -H "Authorization: Bearer YOUR_JWT" \
   -H "Content-Type: application/json" \
   -d '{
     "action": "start_run",
     "dungeonId": 1,
-    "actionToken": 0,
+    "actionToken": "",
     "data": {
       "consumables": [],
+      "itemId": 0,
+      "expectedAmount": 0,
+      "index": 0,
       "isJuiced": false,
-      "index": 0
+      "gearInstanceIds": []
     }
   }'
 ```
+
+`start_run` token handling is dungeon/session dependent. Fresh Underhaul and fresh 5000 runs have both been observed succeeding with `actionToken: ""`, while other contexts may still require a chained token or accept `0`.
 
 Parameters:
 - `dungeonId`: which dungeon to enter
@@ -254,6 +295,8 @@ curl -X POST https://gigaverse.io/api/game/dungeon/action \
 
 Actions: `loot_one`, `loot_two`, `loot_three`, `loot_four`
 
+⚠️ `lootOptions` in `/game/dungeon/state` may persist briefly even when `lootPhase=false`. Do not choose loot from `lootOptions` alone without a verified loot transition.
+
 ### Other Actions
 
 | Action | Purpose | Data Required |
@@ -278,7 +321,11 @@ Returns current room, enemies, HP, available actions.
 
 ## Rate Limits
 
-*TBD*
+No reliable hard rate-limit contract is documented here yet.
+Operate conservatively:
+- keep one in-flight dungeon action per run
+- avoid rapid blind retries
+- resync state before retrying logical failures
 
 ---
 

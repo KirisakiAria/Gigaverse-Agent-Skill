@@ -28,11 +28,14 @@ const MINT_ABI = [{
 }];
 
 async function main() {
-  const username = process.argv[2];
-  if (!username) {
+  const rawUsername = process.argv[2];
+  if (!rawUsername) {
     console.error('Usage: node mint-direct.cjs <username>');
     process.exit(1);
   }
+
+  // Gigaverse signs `username.toLowerCase().trim()`.
+  const username = rawUsername.toLowerCase().trim();
 
   // Load private key
   const keyPath = join(homedir(), '.secrets', 'gigaverse-private-key.txt');
@@ -42,9 +45,12 @@ async function main() {
   const account = privateKeyToAccount(privateKey);
   console.log('EOA Address:', account.address);
 
-  // Load JWT
-  const jwtPath = join(homedir(), '.secrets', 'gigaverse-jwt.txt');
-  const jwt = readFileSync(jwtPath, 'utf8').trim();
+  // Load JWT (prefer skill-local)
+  const jwtSkillPath = join(__dirname, '..', 'credentials', 'jwt.txt');
+  const jwtSecretPath = join(homedir(), '.secrets', 'gigaverse-jwt.txt');
+  const jwt = (require('fs').existsSync(jwtSkillPath)
+    ? readFileSync(jwtSkillPath, 'utf8')
+    : readFileSync(jwtSecretPath, 'utf8')).trim();
 
   // Get mint signature for username
   console.log(`\nChecking username "${username}"...`);

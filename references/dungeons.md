@@ -5,7 +5,7 @@
 | dungeonId | Name | Description |
 |-----------|------|-------------|
 | 1 | **Dungetron: 5000** | Main dungeon |
-| other | **Underhaul** | Alternative dungeon |
+| 3 | **Underhaul** | Alternative dungeon |
 
 ## Room Structure
 
@@ -57,19 +57,31 @@ After defeating an enemy, select loot:
 | `loot_one` | Select 1st loot option |
 | `loot_two` | Select 2nd loot option |
 | `loot_three` | Select 3rd loot option |
+| `loot_four` | Select 4th loot option |
 
 ## Starting a Run
 
 ```javascript
-// Dungetron: 5000
-{ action: 'start_run', dungeonId: 1, actionToken: 0, data: {} }
+// Dungetron: 5000 (observed working fresh-start pattern)
+{ action: 'start_run', dungeonId: 1, actionToken: '', data: {} }
 
-// Underhaul (if available)
-{ action: 'start_run', dungeonId: 2, actionToken: 0, data: {} }
+// Underhaul (observed working fresh-start pattern)
+{ action: 'start_run', dungeonId: 3, actionToken: '', data: {} }
 ```
+
+Notes:
+- Always query `/game/dungeon/state` before attempting `start_run`.
+- If `state.data.run != null`, resume the active run instead of starting a new one.
+- `start_run` token handling is not uniform; the server may accept `""`, `0`, or a chained token depending on session state.
+- Current observed working fresh-start pattern for both `5000` and `Underhaul` is `actionToken: ""`.
+- Prefer: use the latest known trusted token when available.
+- If no trusted local token exists, start conservatively and resync immediately after the first accepted action.
+- If start returns a new `actionToken` alongside an error, retry once with that token before concluding failure.
 
 ## Energy
 
-- **Max Energy:** 240
-- **Regen Rate:** 10 per hour
-- **Cost per Run:** Variable (check before starting)
+Treat energy values as live API data, not fixed constants.
+
+- Read current energy state from `/offchain/player/energy/{address}`
+- Use `entities[0].parsedData.energyValue`, `maxEnergy`, and `regenPerHour`
+- Read actual run costs from `/game/dungeon/today`

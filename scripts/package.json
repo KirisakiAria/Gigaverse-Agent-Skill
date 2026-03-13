@@ -1,20 +1,23 @@
 {
-  "name": "scripts",
+  "name": "gigaverse-scripts",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "private": true,
+  "description": "Helper scripts for the gigaverse skill",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "run": "ts-node ./run-dungeon.ts",
+    "run:underhaul:normal": "ts-node ./run-dungeon.ts --dungeon underhaul",
+    "run:underhaul:juiced": "ts-node ./run-dungeon.ts --dungeon underhaul --juiced",
+    "run:5000:normal": "ts-node ./run-dungeon.ts --dungeon 5000",
+    "run:5000:juiced": "ts-node ./run-dungeon.ts --dungeon 5000 --juiced",
+    "purchase:juice": "ts-node ./purchase-juice.ts",
+    "auth": "bash ./auth.sh"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@types/node": "^25.2.2",
-    "typescript": "^5.9.3",
     "viem": "^2.45.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

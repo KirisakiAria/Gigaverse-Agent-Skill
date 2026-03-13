@@ -204,11 +204,11 @@ curl https://gigaverse.io/api/offchain/player/energy/0xYOUR_ADDRESS
 curl https://gigaverse.io/api/game/dungeon/today \
   -H "Authorization: Bearer YOUR_JWT"
 
-# Start run
+# Start run (Underhaul fresh-start example)
 curl -X POST https://gigaverse.io/api/game/dungeon/action \
   -H "Authorization: Bearer YOUR_JWT" \
   -H "Content-Type: application/json" \
-  -d '{"action":"start_run","dungeonId":1,"actionToken":0,"data":{...}}'
+  -d '{"action":"start_run","dungeonId":3,"actionToken":"","data":{"consumables":[],"itemId":0,"expectedAmount":0,"index":0,"isJuiced":false,"gearInstanceIds":[]}}'
 ```
 
 ---

@@ -2,6 +2,21 @@
 
 Store your preferences in `~/.config/gigaverse/config.json`.
 
+## Credentials (workspace-local recommended)
+
+Recommended JWT path (so the runner works without env vars):
+- `skills/gigaverse/credentials/jwt.txt`
+
+Accepted formats:
+- `Bearer <JWT>`
+- `<JWT>` (raw)
+
+JWT load precedence:
+1) `GIGAVERSE_JWT` env
+2) `skills/gigaverse/credentials/jwt.txt`
+3) `~/.secrets/gigaverse-jwt.txt`
+
+
 ## Full Config Example
 
 ```json
@@ -18,7 +33,15 @@ Store your preferences in `~/.config/gigaverse/config.json`.
     "default_faction": null,
     "username_style": "random",
     "notify_on_full_energy": true,
-    "juice_declined": false
+    "juice_declined": false,
+    "resume_preferred": true,
+    "require_loot_phase": true,
+    "repair_skip_gear_ids": [],
+    "auto_continue_run": true,
+    "abort_on_failed_prerun_gate": true,
+    "battle_report_on_completion": true,
+    "energy_threshold_normal": 40,
+    "energy_threshold_juiced": 120
   }
 }
 ```
@@ -112,7 +135,7 @@ Example: `["rarity", "hp", "atk"]` — Take highest rarity, then HP, then ATK.
 - `"ask"` — Always prompt
 
 ### `preferences.notify_on_full_energy`
-- `true` — Alert when 240 energy reached
+- `true` — Alert when current energy reaches live max energy from `/offchain/player/energy/{address}`
 - `false` — Stay silent
 
 ### `preferences.juice_declined`
@@ -120,6 +143,36 @@ Example: `["rarity", "hp", "atk"]` — Take highest rarity, then HP, then ATK.
 - `true` — Never suggest juice (player explicitly declined)
 
 Note: Even if `juice_declined: true`, agent will still mention active sales or limited-time offerings.
+
+### `preferences.resume_preferred`
+- `true` (default) — Always query `/game/dungeon/state` first and resume active runs when possible
+- `false` — Prefer fresh starts when no recovery logic is desired
+
+### `preferences.require_loot_phase`
+- `true` (default) — Do not choose loot from `lootOptions` alone; require `lootPhase=true` or another verified loot transition
+- `false` — Allow looser local heuristics for experimental bots
+
+### `preferences.repair_skip_gear_ids`
+- Array of gear instance IDs to skip during pre-run repair checks
+- Useful for known broken / deprecated / intentionally ignored gear
+
+### `preferences.auto_continue_run`
+- `true` (default) — Once a dungeon run starts, continue automatically to completion
+- `false` — Pause for confirmation during experimental/manual play
+
+### `preferences.abort_on_failed_prerun_gate`
+- `true` (default) — If active-run, energy, or repair gates fail, abort and notify instead of forcing progress
+- `false` — Allow experimental/manual overrides (not recommended for stable automation)
+
+### `preferences.battle_report_on_completion`
+- `true` (default) — Return a battle report when a run ends
+- `false` — Suppress end-of-run summary output in highly minimal automation
+
+### `preferences.energy_threshold_normal`
+- `40` (default) — Minimum energy required before starting a normal run
+
+### `preferences.energy_threshold_juiced`
+- `120` (default) — Minimum energy required before starting a juiced / 3x run
 
 ---
 

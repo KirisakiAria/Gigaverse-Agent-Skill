@@ -1,1 +1,5 @@
 scripts/node_modules
+
+# user credentials (do not commit)
+credentials/jwt.txt
+credentials/address.txt

@@ -36,6 +36,8 @@ Response:
 ]
 ```
 
+⚠️ `lootOptions` may linger briefly in state even when the server is no longer in a true loot phase. Track loot with `lootPhase` or another verified room-transition signal; do not treat `lootOptions` alone as authoritative.
+
 ### Displaying Loot Options
 
 Format for humans:
@@ -131,6 +133,9 @@ Items Collected:
 ━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+Fallback room rule (battle report):
+- If the run ends and the final room index is missing, compute the final room as `lootCount + 1`.
+
 ---
 
 ## Daily Tally Format
@@ -214,6 +219,8 @@ Loot Collected:
 
 Daily Total: 3 runs, 2 victories
 ```
+
+For resumed runs, mark whether the agent **started** the run or **resumed** an in-progress run from `/game/dungeon/state`.
 
 ## Daily Summary
 
